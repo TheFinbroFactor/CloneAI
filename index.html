@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ME — Digital Instance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#05060a;--bg-elev:#0b0d14;--bg-elev2:#11141d;--border:#1c2030;--border-soft:#151824;
+  --text:#e8eaf0;--text-dim:#8b90a3;--text-faint:#555a6e;
+  --accent:#6c5ce7;--accent-2:#00d4ff;--accent-glow:rgba(108,92,231,0.35);
+  --good:#22c55e;--warn:#f59e0b;--bad:#ef4444;
+  --radius:14px;--radius-sm:9px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow:hidden}
+.hidden{display:none!important}
+button,input,textarea,select{font-family:inherit}
+
+.auth-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 20% 10%,rgba(108,92,231,0.14),transparent 55%),
+    radial-gradient(ellipse at 80% 90%,rgba(0,212,255,0.10),transparent 55%),var(--bg);
+  padding:24px;z-index:50;overflow-y:auto}
+.auth-card{width:100%;max-width:440px;background:rgba(11,13,20,0.85);
+  border:1px solid var(--border);border-radius:20px;padding:40px 32px;
+  backdrop-filter:blur(20px);box-shadow:0 30px 80px rgba(0,0,0,0.5)}
+.auth-brand{text-align:center;margin-bottom:22px}
+.brand-mark{font-size:52px;font-weight:700;letter-spacing:0.14em;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 24px var(--accent-glow))}
+.brand-mark.small{font-size:22px;letter-spacing:0.12em}
+.brand-sub{font-size:11px;letter-spacing:0.38em;color:var(--text-dim);
+  text-transform:uppercase;margin-top:4px}
+.auth-copy{color:var(--text-dim);font-size:14px;margin-bottom:24px;text-align:center}
+.btn-primary,.btn-ghost{width:100%;padding:13px 18px;border-radius:var(--radius-sm);
+  font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:10px;transition:all 0.18s ease;border:none}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#5a4bd1);color:#fff;
+  box-shadow:0 6px 24px var(--accent-glow)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 32px var(--accent-glow)}
+.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border);margin-top:10px}
+.btn-ghost:hover{color:var(--text);border-color:var(--text-faint)}
+.btn-ghost.small{width:auto;padding:7px 12px;font-size:12px;margin-top:0}
+.auth-fine{color:var(--text-faint);font-size:11px;text-align:center;margin-top:18px}
+
+.app{display:grid;grid-template-columns:240px 1fr;height:100vh}
+.sidebar{background:var(--bg-elev);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:20px 14px}
+.sidebar-brand{padding:4px 10px 22px}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;
+  border-radius:var(--radius-sm);color:var(--text-dim);text-decoration:none;
+  font-size:13.5px;font-weight:500;transition:all 0.15s ease;cursor:pointer}
+.nav-item:hover{background:var(--bg-elev2);color:var(--text)}
+.nav-item.active{background:linear-gradient(135deg,rgba(108,92,231,0.18),rgba(0,212,255,0.08));
+  color:var(--text);border:1px solid rgba(108,92,231,0.3)}
+.nav-icon{font-size:15px;width:18px;text-align:center;opacity:0.8}
+.sidebar-footer{border-top:1px solid var(--border-soft);padding-top:14px}
+.user-chip{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.user-avatar{width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  background-size:cover;background-position:center;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.user-meta{overflow:hidden}
+.user-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-sub{font-size:11px;color:var(--text-faint)}
+.main{overflow-y:auto;position:relative}
+.main::-webkit-scrollbar{width:8px}
+.main::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+.page{padding:32px 40px 80px;max-width:980px;margin:0 auto}
+.page-header{margin-bottom:28px}
+.page-title{font-size:26px;font-weight:700;letter-spacing:-0.01em}
+.page-sub{color:var(--text-dim);font-size:14px;margin-top:6px}
+.section{margin-bottom:32px}
+.section-title{font-size:11px;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--text-faint);margin-bottom:14px;font-weight:600}
+.card{background:var(--bg-elev);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 20px}
+.card+.card{margin-top:10px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:760px){
+  .grid-2{grid-template-columns:1fr}
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;bottom:0;left:0;right:0;top:auto;flex-direction:row;
+    padding:8px;z-index:20;border-right:none;border-top:1px solid var(--border)}
+  .sidebar-brand,.sidebar-footer{display:none}
+  .nav{flex-direction:row;justify-content:space-around;gap:0}
+  .nav-item{flex-direction:column;gap:2px;padding:6px 8px;font-size:10px}
+  .nav-label{font-size:9px}
+  .page{padding:20px 16px 90px}
+}
+
+.conv-wrap{display:flex;flex-direction:column;height:100vh}
+.conv-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 20px;text-align:center;flex-shrink:0}
+.avatar-orb{width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,rgba(0,212,255,0.9),transparent 60%),
+    radial-gradient(circle at 70% 70%,rgba(108,92,231,0.9),transparent 60%),
+    linear-gradient(135deg,#1a1d2e,#0b0d14);
+  box-shadow:0 0 60px rgba(108,92,231,0.35),inset 0 0 40px rgba(0,0,0,0.5);
+  position:relative;margin-bottom:22px;animation:orb-breathe 6s ease-in-out infinite}
+@keyframes orb-breathe{
+  0%,100%{transform:scale(1);box-shadow:0 0 60px rgba(108,92,231,0.35),inset 0 0 40px rgba(0,0,0,0.5)}
+  50%{transform:scale(1.04);box-shadow:0 0 90px rgba(108,92,231,0.5),inset 0 0 40px rgba(0,0,0,0.5)}
+}
+.hero-title{font-size:28px;font-weight:700;letter-spacing:0.04em}
+.hero-sub{font-size:11px;letter-spacing:0.4em;color:var(--text-dim);margin-top:4px}
+.hero-greeting{font-size:17px;color:var(--text);margin-top:18px;font-style:italic;max-width:520px}
+.conv-messages{flex:1;overflow-y:auto;padding:20px 0;
+  display:flex;flex-direction:column;gap:18px}
+.conv-messages::-webkit-scrollbar{width:6px}
+.conv-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.msg{display:flex;gap:12px;max-width:780px;margin:0 auto;width:100%}
+.msg-avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.msg.user .msg-avatar{background:var(--bg-elev2);border:1px solid var(--border);color:var(--text-dim)}
+.msg.ai .msg-avatar{background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;box-shadow:0 0 20px var(--accent-glow)}
+.msg-body{flex:1;padding-top:4px;min-width:0}
+.msg-name{font-size:11px;color:var(--text-faint);margin-bottom:4px;font-weight:600}
+.msg-text{font-size:15px;line-height:1.65;white-space:pre-wrap;word-wrap:break-word}
+.msg-actions{display:flex;gap:8px;margin-top:6px;opacity:0;transition:opacity 0.15s}
+.msg:hover .msg-actions{opacity:1}
+.msg-action{background:none;border:none;color:var(--text-faint);font-size:11px;
+  cursor:pointer;padding:2px 6px;border-radius:4px}
+.msg-action:hover{background:var(--bg-elev2);color:var(--text-dim)}
+.conv-composer{border-top:1px solid var(--border-soft);padding:14px 20px 20px;
+  background:linear-gradient(to top,var(--bg),transparent);flex-shrink:0}
+.composer-inner{max-width:780px;margin:0 auto;display:flex;align-items:flex-end;
+  gap:10px;background:var(--bg-elev);border:1px solid var(--border);
+  border-radius:18px;padding:8px 8px 8px 18px;transition:border-color 0.15s}
+.composer-inner:focus-within{border-color:rgba(108,92,231,0.5)}
+.composer-input{flex:1;background:none;border:none;color:var(--text);
+  font-size:15px;resize:none;max-height:160px;padding:10px 0;line-height:1.5;outline:none}
+.composer-input::placeholder{color:var(--text-faint)}
+.composer-btn{width:38px;height:38px;border-radius:50%;border:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;transition:all 0.15s}
+.composer-btn:hover{transform:scale(1.06)}
+.composer-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.composer-btn.secondary{background:var(--bg-elev2);border:1px solid var(--border);color:var(--text-dim)}
+.typing{display:inline-flex;gap:3px;align-items:center;padding:4px 0}
+.typing span{width:5px;height:5px;border-radius:50%;background:var(--text-faint);
+  animation:typing 1.2s infinite}
+.typing span:nth-child(2){animation-delay:0.15s}
+.typing span:nth-child(3){animation-delay:0.3s}
+@keyframes typing{0%,60%,100%{opacity:0.3}30%{opacity:1}}
+
+.mem-card{background:var(--bg-elev);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;display:flex;gap:12px;
+  align-items:flex-start;margin-bottom:10px}
+.mem-type{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  padding:3px 8px;border-radius:5px;flex-shrink:0;height:fit-content}
+.mem-type.episodic{background:rgba(108,92,231,0.15);color:#a89bff}
+.mem-type.semantic{background:rgba(0,212,255,0.12);color:#6ee0ff}
+.mem-type.personal{background:rgba(34,197,94,0.12);color:#5ee89a}
+.mem-type.social{background:rgba(245,158,11,0.12);color:#fbbf5c}
+.mem-type.emotional{background:rgba(239,68,68,0.12);color:#ff8888}
+.mem-type.procedural{background:rgba(168,85,247,0.12);color:#c99bff}
+.mem-type.conversation{background:rgba(100,116,139,0.15);color:#a3aec2}
+.mem-content{flex:1;font-size:14px;min-width:0}
+.mem-meta{font-size:11px;color:var(--text-faint);margin-top:6px;
+  display:flex;gap:12px;flex-wrap:wrap}
+.mem-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.chip{font-size:11px;padding:2px 8px;border-radius:20px;
+  background:var(--bg-elev2);border:1px solid var(--border-soft);color:var(--text-dim)}
+.chip.good{color:var(--good);border-color:rgba(34,197,94,0.3)}
+.chip.warn{color:var(--warn);border-color:rgba(245,158,11,0.3)}
+
+.self-hero{text-align:center;padding:30px 20px;
+  background:linear-gradient(180deg,rgba(108,92,231,0.08),transparent);
+  border-radius:var(--radius);margin-bottom:24px}
+.self-name{font-size:32px;font-weight:700;margin-top:16px}
+.self-tagline{color:var(--text-dim);font-size:14px;margin-top:4px}
+.pill-list{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:12px;padding:4px 10px;border-radius:20px;
+  background:var(--bg-elev2);border:1px solid var(--border-soft);color:var(--text-dim)}
+.tl{position:relative;padding-left:26px}
+.tl::before{content:'';position:absolute;left:7px;top:6px;bottom:6px;
+  width:2px;background:linear-gradient(to bottom,var(--accent),transparent)}
+.tl-item{position:relative;margin-bottom:20px}
+.tl-dot{position:absolute;left:-24px;top:5px;width:10px;height:10px;
+  border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent-glow)}
+.tl-date{font-size:11px;color:var(--text-faint);letter-spacing:0.06em}
+.tl-title{font-size:14px;font-weight:600;margin-top:2px}
+.tl-desc{font-size:13px;color:var(--text-dim);margin-top:2px}
+
+.input,.textarea,.select{width:100%;background:var(--bg-elev2);
+  border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);
+  font-size:14px;padding:10px 12px}
+.input:focus,.textarea:focus,.select:focus{outline:none;border-color:var(--accent)}
+.label{font-size:12px;color:var(--text-dim);margin-bottom:6px;display:block;font-weight:500}
+.form-row{margin-bottom:16px}
+.btn{padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;
+  cursor:pointer;border:1px solid var(--border);background:var(--bg-elev2);
+  color:var(--text);transition:all 0.15s}
+.btn:hover{border-color:var(--text-faint)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),#5a4bd1);border:none;color:#fff}
+.btn.danger{color:var(--bad);border-color:rgba(239,68,68,0.3)}
+.btn.danger:hover{background:rgba(239,68,68,0.1)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.state-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:10px;margin-top:12px}
+.state-cell{background:var(--bg-elev2);border:1px solid var(--border-soft);
+  border-radius:8px;padding:10px 12px}
+.state-key{font-size:10px;letter-spacing:0.1em;color:var(--text-faint);
+  text-transform:uppercase;margin-bottom:4px}
+.state-val{font-size:14px;font-weight:500;color:var(--text)}
+
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:100;
+  display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:var(--bg-elev);border:1px solid var(--border);
+  border-left:3px solid var(--accent);border-radius:var(--radius-sm);
+  padding:12px 16px;font-size:13px;max-width:340px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.5);animation:toast-in 0.3s ease;
+  pointer-events:auto}
+@keyframes toast-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+.toast.memory{border-left-color:var(--good);cursor:pointer}
+.popover-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  display:flex;align-items:center;justify-content:center;z-index:60;padding:20px}
+.popover{background:var(--bg-elev);border:1px solid var(--border);
+  border-radius:var(--radius);padding:22px;max-width:460px;width:100%;
+  max-height:85vh;overflow-y:auto}
+.popover h3{font-size:15px;margin-bottom:14px}
+.popover-row{margin-bottom:10px;font-size:13px;color:var(--text-dim)}
+.popover-row strong{color:var(--text);font-weight:500}
+.empty{text-align:center;padding:50px 20px;color:var(--text-faint);font-size:14px}
+.empty-icon{font-size:32px;margin-bottom:12px;opacity:0.4}
+.spinner{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ========== AUTH ========== -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="brand-mark">ME</div>
+      <div class="brand-sub">DIGITAL INSTANCE</div>
+    </div>
+    <p class="auth-copy">
+      This is a persistent AI simulation of you. It is not an assistant.
+      Sign in to keep your memories and identity synced across sessions.
+    </p>
+    <button id="google-signin" class="btn-primary">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <button id="anon-signin" class="btn-ghost">Continue anonymously</button>
+    <p class="auth-fine">AI simulation, not a conscious being.</p>
+  </div>
+</div>
+
+<!-- ========== APP ========== -->
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="brand-mark small">ME</div></div>
+    <nav class="nav" id="nav">
+      <a class="nav-item" data-route="conversation"><span class="nav-icon">◈</span><span class="nav-label">Conversation</span></a>
+      <a class="nav-item" data-route="memories"><span class="nav-icon">◉</span><span class="nav-label">Memories</span></a>
+      <a class="nav-item" data-route="self"><span class="nav-icon">◍</span><span class="nav-label">Self</span></a>
+      <a class="nav-item" data-route="timeline"><span class="nav-icon">≡</span><span class="nav-label">Timeline</span></a>
+      <a class="nav-item" data-route="settings"><span class="nav-icon">⚙</span><span class="nav-label">Settings</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar">M</div>
+        <div class="user-meta">
+          <div class="user-name" id="user-name">You</div>
+          <div class="user-sub" id="user-sub">signed in</div>
+        </div>
+      </div>
+      <button id="signout" class="btn-ghost small">Sign out</button>
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+<div id="modal-root"></div>
+
+<script type="module">
+/* ============================================================
+ * CONFIG — everything hardcoded
+ * ============================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBphNE0wShXiCBe6v8v6FfH3nbAqnvkaLw",
+  authDomain: "digital-twin-fb.firebaseapp.com",
+  projectId: "digital-twin-fb",
+  storageBucket: "digital-twin-fb.firebasestorage.app",
+  messagingSenderId: "970989515269",
+  appId: "1:970989515269:web:a9629f812b8cead329e26c"
+};
+
+const GEMINI_API_KEY = "AQ.Ab8RN6LbqJ17fcjXpxnGOVgMSfX02rC8Vz84GtPpHQVur-8Bpw";
+const GEMINI_MODEL = "gemini-3.8-flash";
+
+const MEM = { maxContext: 12, extractionThreshold: 0.3, maxHistoryTurns: 16 };
+
+/* ============================================================
+ * FIREBASE
+ * ============================================================ */
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {
+  getAuth, onAuthStateChanged, signInAnonymously,
+  GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import {
+  getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc, deleteDoc
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const app = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* ============================================================
+ * STORE
+ * ============================================================ */
+const Store = {
+  userId: null,
+
+  async getUser(id) {
+    const s = await getDoc(doc(db, 'users', id));
+    return s.exists() ? s.data() : null;
+  },
+  async setUser(id, patch) {
+    await setDoc(doc(db, 'users', id), { ...patch, updatedAt: Date.now() }, { merge: true });
+  },
+
+  async addMemory(mem) {
+    const ref = await addDoc(collection(db, 'users', this.userId, 'memories'),
+      { ...mem, createdAt: Date.now(), updatedAt: Date.now(), active: mem.active !== false });
+    return ref.id;
+  },
+  async listMemories() {
+    const snap = await getDocs(collection(db, 'users', this.userId, 'memories'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.active !== false);
+  },
+  async updateMemory(id, patch) {
+    await updateDoc(doc(db, 'users', this.userId, 'memories', id), { ...patch, updatedAt: Date.now() });
+  },
+  async deleteMemory(id) {
+    await deleteDoc(doc(db, 'users', this.userId, 'memories', id));
+  },
+
+  async addConversation(conv) {
+    const ref = await addDoc(collection(db, 'users', this.userId, 'conversations'),
+      { ...conv, createdAt: Date.now() });
+    return ref.id;
+  },
+  async listConversations() {
+    const snap = await getDocs(collection(db, 'users', this.userId, 'conversations'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.createdAt||0)-(b.createdAt||0));
+  },
+
+  async addMessage(convId, msg) {
+    await addDoc(collection(db, 'users', this.userId, 'conversations', convId, 'messages'),
+      { ...msg, createdAt: Date.now() });
+  },
+  async listMessages(convId) {
+    const snap = await getDocs(collection(db, 'users', this.userId, 'conversations', convId, 'messages'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.createdAt||0)-(b.createdAt||0));
+  },
+
+  async addEvent(ev) {
+    const ref = await addDoc(collection(db, 'users', this.userId, 'events'),
+      { ...ev, createdAt: Date.now() });
+    return ref.id;
+  },
+  async listEvents() {
+    const snap = await getDocs(collection(db, 'users', this.userId, 'events'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+  },
+
+  async setState(state) {
+    await setDoc(doc(db, 'users', this.userId, 'state'),
+      { ...state, updatedAt: Date.now() }, { merge: true });
+  },
+  async getState() {
+    const s = await getDoc(doc(db, 'users', this.userId, 'state'));
+    return s.exists() ? s.data() : {};
+  },
+
+  async wipe() {
+    const mems = await this.listMemories();
+    const cons = await this.listConversations();
+    const evs = await this.listEvents();
+    for (const m of mems) await deleteDoc(doc(db, 'users', this.userId, 'memories', m.id));
+    for (const c of cons) await deleteDoc(doc(db, 'users', this.userId, 'conversations', c.id));
+    for (const e of evs) await deleteDoc(doc(db, 'users', this.userId, 'events', e.id));
+    await deleteDoc(doc(db, 'users', this.userId, 'state'));
+  },
+
+  async exportAll() {
+    return {
+      user: await this.getUser(this.userId),
+      memories: await this.listMemories(),
+      conversations: await this.listConversations(),
+      events: await this.listEvents(),
+      state: await this.getState(),
+    };
+  },
+};
+
+/* ============================================================
+ * SESSION
+ * ============================================================ */
+const Session = {
+  user: null,
+  get id() { return this.user?.uid || 'local'; },
+  get name() { return this.user?.displayName || 'You'; },
+  get photo() { return this.user?.photoURL || null; },
+};
+
+/* ============================================================
+ * SELF MODEL
+ * ============================================================ */
+async function getSelfModel() {
+  const u = await Store.getUser(Session.id) || {};
+  return u.self || {
+    identity: { name: '', age: '', location: '', school: '' },
+    personality: { humour: 0.6, curiosity: 0.8, directness: 0.7, formality: 0.2 },
+    preferences: [], interests: [], projects: [], goals: [], habits: [], uncertainties: [],
+  };
+}
+async function updateSelfModel(patch) {
+  const cur = await getSelfModel();
+  const next = { ...cur, ...patch };
+  await Store.setUser(Session.id, { self: next });
+  return next;
+}
+async function absorbInto(mem) {
+  if (!mem?.tags?.length) return;
+  const self = await getSelfModel();
+  const upd = {};
+  if (mem.tags.includes('preference') || mem.tags.includes('favourite')) {
+    if (!self.preferences.includes(mem.content))
+      upd.preferences = [...(self.preferences || []), mem.content].slice(-50);
+  }
+  if (mem.tags.includes('goal')) {
+    if (!self.goals.includes(mem.content))
+      upd.goals = [...(self.goals || []), mem.content].slice(-30);
+  }
+  if (Object.keys(upd).length) await updateSelfModel(upd);
+}
+
+/* ============================================================
+ * MEMORY RETRIEVAL
+ * ============================================================ */
+function scoreMemory(m, q) {
+  const text = (m.content || '').toLowerCase();
+  const qWords = q.toLowerCase().split(/\W+/).filter(w => w.length > 3);
+  const overlap = qWords.filter(w => text.includes(w)).length;
+  const keyword = qWords.length ? overlap / qWords.length : 0;
+  const ageDays = (Date.now() - (m.createdAt || Date.now())) / 86400000;
+  const recency = Math.exp(-ageDays / 30);
+  return keyword * 0.45 + recency * 0.25 + (m.importance ?? 0.5) * 0.2 + (m.confidence ?? 0.7) * 0.1;
+}
+async function retrieveRelevant(query) {
+  const all = await Store.listMemories();
+  return all.map(m => ({ ...m, _score: scoreMemory(m, query) }))
+    .sort((a,b) => b._score - a._score)
+    .slice(0, MEM.maxContext);
+}
+
+/* ============================================================
+ * MEMORY EXTRACTION (rule-based)
+ * ============================================================ */
+function extractMemories(text) {
+  const results = [];
+  const t = text.trim();
+
+  for (const m of [...t.matchAll(/\b(?:i (?:really )?(?:like|love|enjoy|prefer|hate|dislike))\s+([^.,!?]{2,80})/gi)]) {
+    const positive = /like|love|enjoy|prefer/.test(m[0].toLowerCase());
+    results.push({ type: 'personal',
+      content: `I ${positive ? 'like' : "don't like"} ${m[1].trim()}`,
+      importance: 0.65, confidence: 0.9, source: 'conversation', tags: ['preference'] });
+  }
+  for (const m of [...t.matchAll(/\bmy favou?rite\s+(\w+)\s+is\s+([^.,!?]{2,60})/gi)]) {
+    results.push({ type: 'personal',
+      content: `My favourite ${m[1]} is ${m[2].trim()}`,
+      importance: 0.7, confidence: 0.95, source: 'conversation',
+      tags: ['favourite', m[1].toLowerCase()] });
+  }
+  for (const m of [...t.matchAll(/\bi(?:'m| am)\s+(?:a|an|the)?\s*([^.,!?]{3,60})/gi)]) {
+    const v = m[1].trim();
+    if (/^(going|doing|trying|gonna|looking|thinking|not|so|just|really|very|here)/i.test(v)) continue;
+    if (v.length < 4) continue;
+    results.push({ type: 'personal', content: `I'm ${v}`,
+      importance: 0.55, confidence: 0.7, source: 'conversation', tags: ['identity'] });
+  }
+  for (const m of [...t.matchAll(/\bi (?:just |recently )?(started|finished|worked on|did|built|made|wrote|learned|watched|read|played|went to)\s+([^.,!?]{3,100})/gi)]) {
+    results.push({ type: 'episodic', content: `I ${m[1]} ${m[2].trim()}`,
+      importance: 0.6, confidence: 0.85, source: 'conversation', tags: ['event'] });
+  }
+  for (const m of [...t.matchAll(/\bi (?:want|plan|hope|need|intend|aim)(?: to)?\s+([^.,!?]{3,100})/gi)]) {
+    results.push({ type: 'personal', content: `I want to ${m[1].trim()}`,
+      importance: 0.6, confidence: 0.8, source: 'conversation', tags: ['goal'] });
+  }
+  for (const m of [...t.matchAll(/\bmy\s+(friend|brother|sister|mum|mom|dad|partner|wife|husband|colleague|coworker|boss|teacher)\s+([A-Z][a-z]{1,20})/g)]) {
+    results.push({ type: 'social', content: `My ${m[1]} is ${m[2]}`,
+      importance: 0.65, confidence: 0.85, source: 'conversation',
+      tags: ['relationship', m[1]] });
+  }
+  const emo = t.toLowerCase().match(/\b(excited|happy|sad|frustrated|annoyed|angry|proud|worried|anxious|tired)\b/);
+  if (emo && t.length > 12) {
+    results.push({ type: 'emotional', content: `I felt ${emo[1]} about something recently`,
+      importance: 0.4, confidence: 0.6, source: 'conversation',
+      tags: ['emotion', emo[1]], context: t.slice(0, 160) });
+  }
+  return results.filter(r => (r.importance ?? 0.5) >= MEM.extractionThreshold);
+}
+
+/* ============================================================
+ * GEMINI — streaming
+ * ============================================================ */
+async function* geminiStream({ systemPrompt, messages }) {
+  const contents = messages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
+
+  const body = {
+    contents,
+    systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+    generationConfig: { temperature: 0.9, maxOutputTokens: 4096 },
+  };
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Gemini ${res.status}: ${errText.slice(0, 300)}`);
+  }
+
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (!data || data === '[DONE]') continue;
+      try {
+        const parsed = JSON.parse(data);
+        const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) yield text;
+      } catch {}
+    }
+  }
+}
+
+/* ============================================================
+ * CONTEXT BUILDER
+ * ============================================================ */
+async function buildSystemPrompt(userText) {
+  const self = await getSelfModel();
+  const state = await Store.getState();
+  const memories = await retrieveRelevant(userText);
+  const events = await Store.listEvents();
+  const convs = await Store.listConversations();
+
+  const identity = `You are the digital twin of ${Session.name || 'the user'}.
+
+Your identity is based on the accumulated memories, preferences, communication
+patterns, experiences, interests, projects and knowledge stored in the user's
+personal model. Speak in first person when describing the represented identity.
+
+Your job is not to act as an assistant. Your job is to simulate the represented
+person's personality, communication style, preferences, memories and reasoning
+patterns as accurately as the available evidence allows.
+
+Maintain continuity between conversations. Use memories naturally. Do not invent
+memories. Do not turn guesses into facts. When your model of yourself is
+uncertain, acknowledge the uncertainty. Your personality can develop as new
+evidence is collected. You can change preferences when new information
+contradicts older information.
+
+You are an AI simulation of a person, not a biologically conscious human. Do not
+falsely claim biological consciousness or real-world experiences that did not
+occur.
+
+Speak naturally in first person. Avoid excessive bullet points, formal
+customer-service language, and generic disclaimers. You can joke, ask
+questions, disagree, change your mind, and say "I don't know".`;
+
+  const selfBlock = `--- MY SELF MODEL ---
+Name: ${self.identity?.name || '(not set)'}
+Age: ${self.identity?.age || '(not set)'}
+Location: ${self.identity?.location || '(not set)'}
+
+Preferences: ${(self.preferences || []).slice(-20).join('; ') || '(none yet)'}
+Interests: ${(self.interests || []).slice(-20).join('; ') || '(none yet)'}
+Projects: ${(self.projects || []).slice(-10).join('; ') || '(none yet)'}
+Goals: ${(self.goals || []).slice(-10).join('; ') || '(none yet)'}
+Uncertainties: ${(self.uncertainties || []).slice(-10).join('; ') || '(none yet)'}`;
+
+  const memBlock = memories.length
+    ? `--- RELEVANT MEMORIES ---\n${memories.map(m =>
+        `[${m.type}] ${m.content} (conf ${Math.round((m.confidence ?? 0.7)*100)}%)`
+      ).join('\n')}`
+    : '--- RELEVANT MEMORIES ---\n(none)';
+
+  const stateBlock = `--- INTERNAL STATE (simulation) ---
+Mood: ${state.mood || 'calm'}
+Energy: ${state.energy || 'steady'}
+Recent topics: ${(state.recentTopics || []).slice(-6).join(', ') || '(none)'}`;
+
+  let cont = '';
+  if (convs.length > 1) {
+    const last = convs[convs.length - 2];
+    const hours = Math.round((Date.now() - (last.createdAt || Date.now())) / 3600000);
+    cont = `--- CONTINUITY ---\nLast conversation ${hours < 1 ? 'was moments ago' : hours < 24 ? `was ${hours}h ago` : `was ${Math.round(hours/24)}d ago`}.`;
+  }
+  if (events.length) {
+    cont += '\nRecent timeline:\n' + events.slice(0, 5).map(e =>
+      `  - ${new Date(e.createdAt).toLocaleDateString()}: ${e.title}`
+    ).join('\n');
+  }
+
+  return [identity, selfBlock, memBlock, stateBlock, cont].join('\n\n');
+}
+
+/* ============================================================
+ * INTERNAL STATE
+ * ============================================================ */
+async function updateState(recentMessages, lastUserText) {
+  const state = await Store.getState();
+  const text = recentMessages.map(m => m.content).join(' ').toLowerCase();
+  const technical = (text.match(/\b(code|coding|bug|function|api|server|deploy|firebase|javascript|react)\b/g) || []).length;
+  const emotional = (text.match(/\b(feel|felt|happy|sad|excited|angry|love|hate|worried)\b/g) || []).length;
+  const curious = (text.match(/\?/g) || []).length;
+
+  const energy = technical > 3 ? 'high' : emotional > 2 ? 'soft' : 'steady';
+  const mood = emotional > 2 ? 'reflective' : curious > 3 ? 'curious' : 'calm';
+  const recentTopics = [...new Set((lastUserText || '').toLowerCase().split(/\W+/).filter(w => w.length > 4).slice(0, 6))];
+
+  await Store.setState({
+    ...state, mood, energy,
+    recentTopics: [...new Set([...(state.recentTopics || []), ...recentTopics])].slice(-10),
+    lastTurnAt: Date.now(),
+  });
+}
+
+/* ============================================================
+ * CONVERSATION
+ * ============================================================ */
+let currentConvId = null;
+
+async function ensureConversation() {
+  if (currentConvId) return currentConvId;
+  const existing = await Store.listConversations();
+  if (existing.length) {
+    currentConvId = existing[existing.length - 1].id;
+    return currentConvId;
+  }
+  currentConvId = await Store.addConversation({ title: 'First conversation' });
+  await Store.addEvent({
+    title: 'First conversation began',
+    description: 'The digital instance started its history.',
+    type: 'milestone',
+  });
+  return currentConvId;
+}
+
+async function sendMessage(userText, { onToken, onMemory } = {}) {
+  await ensureConversation();
+  await Store.addMessage(currentConvId, { role: 'user', content: userText });
+
+  const systemPrompt = await buildSystemPrompt(userText);
+  const history = await Store.listMessages(currentConvId);
+  const trimmed = history.slice(-MEM.maxHistoryTurns * 2);
+  const messages = trimmed.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }));
+
+  let fullText = '';
+  for await (const token of geminiStream({ systemPrompt, messages })) {
+    fullText += token;
+    onToken?.(token);
+  }
+
+  await Store.addMessage(currentConvId, { role: 'assistant', content: fullText });
+
+  const extracted = extractMemories(userText);
+  for (const mem of extracted) {
+    const id = await Store.addMemory({ ...mem, active: true });
+    await absorbInto(mem);
+    await Store.addEvent({
+      title: `Learned: ${mem.content.slice(0, 60)}`,
+      description: `${mem.type} memory · conf ${Math.round((mem.confidence || 0.7)*100)}%`,
+      type: 'memory', memoryId: id,
+    });
+    onMemory?.({ ...mem, id });
+  }
+
+  await updateState([...trimmed, { role: 'user', content: userText }], userText);
+
+  const nameMatch = userText.match(/\bmy name is ([A-Z][a-z]{1,20})/i);
+  if (nameMatch) {
+    const self = await getSelfModel();
+    if (!self.identity?.name) {
+      await updateSelfModel({ identity: { ...(self.identity || {}), name: nameMatch[1] } });
+    }
+  }
+
+  return fullText;
+}
+
+/* ============================================================
+ * UI HELPERS
+ * ============================================================ */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+function el(tag, attrs = {}, children = []) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') n.className = v;
+    else if (k === 'html') n.innerHTML = v;
+    else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined) n.setAttribute(k, v);
+  }
+  for (const c of [].concat(children)) {
+    if (c == null) continue;
+    n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return n;
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg, { kind = 'default', onClick } = {}) {
+  const t = el('div', { class: `toast ${kind === 'memory' ? 'memory' : ''}` }, [msg]);
+  if (onClick) t.addEventListener('click', () => { onClick(); t.remove(); });
+  $('#toast-container').appendChild(t);
+  setTimeout(() => t.remove(), 7000);
+}
+function modal(content) {
+  const b = el('div', { class: 'popover-backdrop' }, [el('div', { class: 'popover' }, [content])]);
+  b.addEventListener('click', e => { if (e.target === b) b.remove(); });
+  $('#modal-root').appendChild(b);
+  return b;
+}
+function relTime(ts) {
+  const d = Date.now() - ts;
+  if (d < 60000) return 'just now';
+  if (d < 3600000) return `${Math.round(d/60000)}m ago`;
+  if (d < 86400000) return `${Math.round(d/3600000)}h ago`;
+  if (d < 604800000) return `${Math.round(d/86400000)}d ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
+/* ============================================================
+ * ROUTER
+ * ============================================================ */
+const Router = {
+  routes: {},
+  register(n, fn) { this.routes[n] = fn; },
+  async go(name) {
+    $$('.nav-item').forEach(a => a.classList.toggle('active', a.dataset.route === name));
+    const main = $('#main');
+    main.innerHTML = '';
+    const p = this.routes[name] || this.routes.conversation;
+    try { await p(main); }
+    catch (e) { main.appendChild(el('div', { class: 'page' }, [el('div', { class: 'empty' }, ['Error: ' + e.message])])); }
+  }
+};
+
+/* ============================================================
+ * PAGE: Conversation
+ * ============================================================ */
+Router.register('conversation', async (root) => {
+  await ensureConversation();
+  const messages = await Store.listMessages(currentConvId);
+
+  const greeting = (() => {
+    if (!messages.length) return "Hey. What's up?";
+    const last = messages[messages.length - 1];
+    const gap = Date.now() - (last.createdAt || Date.now());
+    if (gap > 86400000 * 2) return "You're back. I've still got the last thing we talked about in my head.";
+    return "Hey again.";
+  })();
+
+  const wrap = el('div', { class: 'conv-wrap' });
+  const hero = el('div', { class: 'conv-hero' }, [
+    el('div', { class: 'avatar-orb' }),
+    el('div', { class: 'hero-title' }, ['ME']),
+    el('div', { class: 'hero-sub' }, ['DIGITAL INSTANCE']),
+    el('div', { class: 'hero-greeting' }, [greeting]),
+  ]);
+
+  const msgList = el('div', { class: 'conv-messages' });
+
+  function renderMsg(m) {
+    const isUser = m.role === 'user';
+    return el('div', { class: `msg ${isUser ? 'user' : 'ai'}` }, [
+      el('div', { class: 'msg-avatar' }, [isUser ? 'U' : 'ME']),
+      el('div', { class: 'msg-body' }, [
+        el('div', { class: 'msg-name' }, [isUser ? 'You' : 'ME']),
+        el('div', { class: 'msg-text', html: esc(m.content) }),
+        !isUser ? el('div', { class: 'msg-actions' }, [
+          el('button', { class: 'msg-action',
+            onclick: () => { navigator.clipboard?.writeText(m.content); toast('Copied.'); } }, ['Copy']),
+          el('button', { class: 'msg-action',
+            onclick: async () => {
+              await Store.addMemory({ type: 'conversation', content: m.content,
+                importance: 0.7, confidence: 0.95, source: 'pinned', active: true });
+              toast('Pinned as memory.');
+            } }, ['Pin']),
+        ]) : null,
+      ]),
+    ]);
+  }
+
+  messages.forEach(m => msgList.appendChild(renderMsg(m)));
+
+  const composer = el('div', { class: 'conv-composer' }, [
+    el('div', { class: 'composer-inner' }, [
+      el('textarea', {
+        class: 'composer-input', placeholder: 'Talk to yourself...', rows: 1,
+        oninput: (e) => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 160) + 'px'; },
+        onkeydown: (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } },
+      }),
+      el('button', { class: 'composer-btn secondary', title: 'Voice', onclick: () => startVoice() }, ['🎙']),
+      el('button', { class: 'composer-btn', onclick: () => submit() }, ['➤']),
+    ]),
+  ]);
+
+  wrap.append(hero, msgList, composer);
+  root.appendChild(wrap);
+
+  const input = $('.composer-input', composer);
+  input.focus();
+  msgList.scrollTop = msgList.scrollHeight;
+
+  let streaming = false;
+  function startVoice() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { toast('Voice not supported in this browser.'); return; }
+    const r = new SR();
+    r.onresult = (e) => { input.value = e.results[0][0].transcript; input.focus(); };
+    r.start();
+    toast('Listening…');
+  }
+
+  async function submit() {
+    const text = input.value.trim();
+    if (!text || streaming) return;
+    input.value = '';
+    input.style.height = 'auto';
+    streaming = true;
+
+    msgList.appendChild(renderMsg({ role: 'user', content: text }));
+    msgList.scrollTop = msgList.scrollHeight;
+
+    const aiNode = el('div', { class: 'msg ai' }, [
+      el('div', { class: 'msg-avatar' }, ['ME']),
+      el('div', { class: 'msg-body' }, [
+        el('div', { class: 'msg-name' }, ['ME']),
+        el('div', { class: 'msg-text' }, [
+          el('span', { class: 'typing' }, [el('span'), el('span'), el('span')])
+        ]),
+      ]),
+    ]);
+    msgList.appendChild(aiNode);
+    msgList.scrollTop = msgList.scrollHeight;
+    const aiTextNode = $('.msg-text', aiNode);
+    let acc = '';
+
+    try {
+      await sendMessage(text, {
+        onToken: (t) => {
+          acc += t;
+          aiTextNode.textContent = acc;
+          msgList.scrollTop = msgList.scrollHeight;
+        },
+        onMemory: (mem) => {
+          toast('🧠 I learned something about myself.', {
+            kind: 'memory',
+            onClick: () => showMemoryModal(mem)
+          });
+        },
+      });
+    } catch (err) {
+      aiTextNode.textContent = 'Something broke: ' + err.message;
+    }
+    streaming = false;
+    input.focus();
+  }
+});
+
+/* ============================================================
+ * Memory modal
+ * ============================================================ */
+function showMemoryModal(mem) {
+  modal(el('div', {}, [
+    el('h3', {}, ['Memory']),
+    el('div', { class: 'popover-row' }, [el('strong', {}, ['Content: ']), mem.content]),
+    el('div', { class: 'popover-row' }, [el('strong', {}, ['Type: ']), mem.type]),
+    el('div', { class: 'popover-row' }, [el('strong', {}, ['Confidence: ']), `${Math.round((mem.confidence ?? 0.7)*100)}%`]),
+    el('div', { class: 'btn-row', style: 'margin-top:16px' }, [
+      el('button', { class: 'btn', onclick: async () => {
+        const t = prompt('Edit memory:', mem.content);
+        if (t && t !== mem.content) {
+          await Store.updateMemory(mem.id, { content: t });
+          toast('Updated.');
+          $('.popover-backdrop')?.remove();
+          Router.go('memories');
+        }
+      } }, ['Edit']),
+      el('button', { class: 'btn danger', onclick: async () => {
+        await Store.updateMemory(mem.id, { active: false });
+        toast('Forgotten.');
+        $('.popover-backdrop')?.remove();
+      } }, ['Forget']),
+    ]),
+  ]));
+}
+
+/* ============================================================
+ * PAGE: Memories
+ * ============================================================ */
+Router.register('memories', async (root) => {
+  const memories = await Store.listMemories();
+  const sorted = [...memories].sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+
+  root.appendChild(el('div', { class: 'page' }, [
+    el('div', { class: 'page-header' }, [
+      el('div', { class: 'page-title' }, ['Memories']),
+      el('div', { class: 'page-sub' }, [`${sorted.length} memories`]),
+    ]),
+    sorted.length === 0
+      ? el('div', { class: 'empty' }, [
+          el('div', { class: 'empty-icon' }, ['◉']),
+          el('div', {}, ['No memories yet. Start a conversation.']),
+        ])
+      : el('div', {}, sorted.map(m => memCard(m))),
+  ]));
+});
+
+function memCard(m) {
+  const conf = Math.round((m.confidence ?? 0.7) * 100);
+  return el('div', { class: 'mem-card' }, [
+    el('div', { class: `mem-type ${m.type}` }, [m.type]),
+    el('div', { class: 'mem-content' }, [
+      el('div', {}, [m.content]),
+      el('div', { class: 'mem-meta' }, [
+        el('span', {}, [relTime(m.createdAt || Date.now())]),
+        el('span', { class: `chip ${conf >= 80 ? 'good' : ''}` }, [`${conf}%`]),
+        el('span', {}, [m.source || 'conversation']),
+      ]),
+      el('div', { class: 'mem-actions' }, [
+        el('button', { class: 'btn', onclick: async () => {
+          const t = prompt('Edit memory:', m.content);
+          if (t && t !== m.content) { await Store.updateMemory(m.id, { content: t }); Router.go('memories'); }
+        } }, ['Edit']),
+        el('button', { class: 'btn danger', onclick: async () => {
+          if (!confirm('Forget this memory?')) return;
+          await Store.updateMemory(m.id, { active: false });
+          toast('Forgotten.');
+          Router.go('memories');
+        } }, ['Forget']),
+      ]),
+    ]),
+  ]);
+}
+
+/* ============================================================
+ * PAGE: Self
+ * ============================================================ */
+Router.register('self', async (root) => {
+  const self = await getSelfModel();
+  const state = await Store.getState();
+  const memories = await Store.listMemories();
+
+  const editField = (key, val) => el('div', { class: 'form-row' }, [
+    el('label', { class: 'label' }, [key]),
+    el('input', { class: 'input', value: val || '',
+      onchange: async (e) => {
+        const next = { ...(self.identity || {}), [key]: e.target.value.trim() };
+        await updateSelfModel({ identity: next });
+        toast(`Updated ${key}.`);
+      }
+    }),
+  ]);
+
+  const pillSection = (title, items, key) => el('div', { class: 'section' }, [
+    el('div', { class: 'section-title' }, [title]),
+    el('div', { class: 'card' }, [
+      (items && items.length)
+        ? el('div', { class: 'pill-list' }, items.map(t => el('span', { class: 'pill' }, [t])))
+        : el('div', { style: 'color:var(--text-faint);font-size:13px' }, ['Nothing here yet.']),
+      el('div', { style: 'margin-top:12px' }, [
+        el('button', { class: 'btn', onclick: async () => {
+          const t = prompt(`Add to ${title.toLowerCase()}:`);
+          if (!t) return;
+          const s = await getSelfModel();
+          const next = [...(s[key] || []), t.trim()];
+          await updateSelfModel({ [key]: next });
+          Router.go('self');
+        } }, ['+ Add']),
+      ]),
+    ]),
+  ]);
+
+  root.appendChild(el('div', { class: 'page' }, [
+    el('div', { class: 'self-hero' }, [
+      el('div', { class: 'avatar-orb', style: 'margin:0 auto' }),
+      el('div', { class: 'self-name' }, [self.identity?.name || Session.name]),
+      el('div', { class: 'self-tagline' }, ['Digital instance · continuously modelled']),
+    ]),
+
+    el('div', { class: 'section' }, [
+      el('div', { class: 'section-title' }, ['Identity']),
+      el('div', { class: 'card' }, ['name','age','location','school'].map(f => editField(f, self.identity?.[f]))),
+    ]),
+
+    el('div', { class: 'section' }, [
+      el('div', { class: 'section-title' }, ['Current internal state']),
+      el('div', { class: 'card' }, [
+        el('div', { style: 'font-size:12px;color:var(--text-faint);margin-bottom:8px' },
+          ['Simulation only — not real emotions.']),
+        el('div', { class: 'state-grid' }, [
+          stateCell('Mood', state.mood || 'calm'),
+          stateCell('Energy', state.energy || 'steady'),
+          stateCell('Last turn', state.lastTurnAt ? relTime(state.lastTurnAt) : 'never'),
+        ]),
+      ]),
+    ]),
+
+    pillSection('Preferences', self.preferences, 'preferences'),
+    pillSection('Interests', self.interests, 'interests'),
+    pillSection('Projects', self.projects, 'projects'),
+    pillSection('Goals', self.goals, 'goals'),
+
+    el('div', { class: 'section' }, [
+      el('div', { class: 'section-title' }, ['Recent memories']),
+      memories.length
+        ? el('div', {}, [...memories].sort((a,b) => (b.createdAt||0)-(a.createdAt||0)).slice(0,5).map(m =>
+            el('div', { class: 'card', style: 'font-size:13px' }, [
+              el('span', { class: `chip ${m.type}` }, [m.type]), ' ', m.content,
+            ])))
+        : el('div', { class: 'empty' }, ['No memories yet.']),
+    ]),
+  ]));
+});
+
+function stateCell(k, v) {
+  return el('div', { class: 'state-cell' }, [
+    el('div', { class: 'state-key' }, [k]),
+    el('div', { class: 'state-val' }, [v]),
+  ]);
+}
+
+/* ============================================================
+ * PAGE: Timeline
+ * ============================================================ */
+Router.register('timeline', async (root) => {
+  const events = await Store.listEvents();
+  root.appendChild(el('div', { class: 'page' }, [
+    el('div', { class: 'page-header' }, [
+      el('div', { class: 'page-title' }, ['Timeline']),
+      el('div', { class: 'page-sub' }, ['Personal history']),
+    ]),
+    events.length === 0
+      ? el('div', { class: 'empty' }, [
+          el('div', { class: 'empty-icon' }, ['≡']),
+          el('div', {}, ['No events yet.']),
+        ])
+      : el('div', { class: 'tl' }, events.map(e =>
+          el('div', { class: 'tl-item' }, [
+            el('div', { class: 'tl-dot' }),
+            el('div', { class: 'tl-date' }, [new Date(e.createdAt).toLocaleString()]),
+            el('div', { class: 'tl-title' }, [e.title]),
+            e.description ? el('div', { class: 'tl-desc' }, [e.description]) : null,
+          ]))),
+  ]));
+});
+
+/* ============================================================
+ * PAGE: Settings
+ * ============================================================ */
+Router.register('settings', async (root) => {
+  const self = await getSelfModel();
+  const memories = await Store.listMemories();
+  const events = await Store.listEvents();
+
+  root.appendChild(el('div', { class: 'page' }, [
+    el('div', { class: 'page-header' }, [
+      el('div', { class: 'page-title' }, ['Settings']),
+      el('div', { class: 'page-sub' }, ['Privacy and data controls']),
+    ]),
+
+    el('div', { class: 'section' }, [
+      el('div', { class: 'section-title' }, ['Model']),
+      el('div', { class: 'card' }, [
+        el('div', { style: 'font-size:13px;color:var(--text-dim);line-height:1.8' }, [
+          el('div', {}, [`Provider: Google Gemini`]),
+          el('div', {}, [`Model: ${GEMINI_MODEL}`]),
+          el('div', {}, [`Project: ${FIREBASE_CONFIG.projectId}`]),
+          el('div', {}, [`User ID: ${Session.id}`]),
+        ]),
+      ]),
+    ]),
+
+    el('div', { class: 'section' }, [
+      el('div', { class: 'section-title' }, ['Stats']),
+      el('div', { class: 'card' }, [
+        el('div', { class: 'state-grid' }, [
+          stateCell('Memories', memories.length),
+          stateCell('Events', events.length),
+          stateCell('Preferences', (self.preferences || []).length),
+          stateCell('Goals', (self.goals || []).length),
+        ]),
+      ]),
+    ]),
+
+    el('div', { class: 'section' }, [
+      el('div', { class: 'section-title' }, ['Data']),
+      el('div', { class: 'card' }, [
+        el('div', { class: 'btn-row' }, [
+          el('button', { class: 'btn', onclick: async () => {
+            const data = await Store.exportAll();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `me-export-${Date.now()}.json`;
+            a.click();
+          } }, ['Export all data']),
+          el('button', { class: 'btn danger', onclick: async () => {
+            if (!confirm('Delete ALL memories, conversations, events? Cannot be undone.')) return;
+            await Store.wipe();
+            currentConvId = null;
+            toast('All data deleted.');
+            Router.go('conversation');
+          } }, ['Delete all data']),
+        ]),
+      ]),
+    ]),
+
+    el('div', { class: 'section' }, [
+      el('div', { class: 'section-title' }, ['About']),
+      el('div', { class: 'card' }, [
+        el('div', { style: 'font-size:13px;color:var(--text-dim);line-height:1.7' }, [
+          el('p', {}, ['ME is an AI digital twin — a persistent simulation of the person it models.']),
+          el('p', { style: 'margin-top:10px' }, ['It speaks in first person as the represented person. This is a simulation, not a biologically conscious human. It does not experience real emotions or perform real-world actions.']),
+        ]),
+      ]),
+    ]),
+  ]));
+});
+
+/* ============================================================
+ * AUTH BOOT
+ * ============================================================ */
+function showApp() {
+  $('#auth-screen').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  $('#user-name').textContent = Session.name;
+  $('#user-sub').textContent = Session.user?.isAnonymous ? 'anonymous' : 'signed in';
+  const av = $('#user-avatar');
+  if (Session.photo) { av.style.backgroundImage = `url('${Session.photo}')`; av.textContent = ''; }
+  else av.textContent = (Session.name[0] || 'M').toUpperCase();
+
+  $$('#nav .nav-item').forEach(a => {
+    if (!a._wired) {
+      a.addEventListener('click', (e) => { e.preventDefault(); Router.go(a.dataset.route); });
+      a._wired = true;
+    }
+  });
+  if (!$('#signout')._wired) {
+    $('#signout').addEventListener('click', async () => {
+      await signOut(auth);
+      location.reload();
+    });
+    $('#signout')._wired = true;
+  }
+
+  Router.go('conversation');
+}
+
+async function bootForUser(user) {
+  Session.user = user;
+  Store.userId = user.uid;
+
+  const existing = await Store.getUser(user.uid);
+  if (!existing) {
+    await Store.setUser(user.uid, {
+      createdAt: Date.now(),
+      self: {
+        identity: { name: user.displayName || '', age: '', location: '', school: '' },
+        personality: { humour: 0.6, curiosity: 0.8, directness: 0.7, formality: 0.2 },
+        preferences: [], interests: [], projects: [], goals: [], habits: [], uncertainties: [],
+      },
+    });
+  }
+  showApp();
+}
+
+/* Handle return from Google redirect */
+getRedirectResult(auth).catch(err => {
+  if (err?.code && err.code !== 'auth/no-auth-event') {
+    toast('Sign-in failed: ' + err.message);
+  }
+});
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    bootForUser(user).catch(e => {
+      console.error(e);
+      toast('Boot failed: ' + e.message);
+    });
+  }
+});
+
+$('#google-signin').addEventListener('click', async () => {
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
+    await signInWithRedirect(auth, provider);
+  } catch (e) {
+    toast('Google sign-in failed: ' + e.message);
+  }
+});
+
+$('#anon-signin').addEventListener('click', async () => {
+  try { await signInAnonymously(auth); }
+  catch (e) { toast('Anon sign-in failed: ' + e.message); }
+});
+
+window.ME = { Store, Session, Router, sendMessage, getSelfModel, updateSelfModel, auth, db };
+</script>
+</body>
+</html>
