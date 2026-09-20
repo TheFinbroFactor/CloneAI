@@ -45,6 +45,7 @@ button,input,textarea,select{font-family:inherit}
 .btn-primary{background:linear-gradient(135deg,var(--accent),#5a4bd1);color:#fff;
   box-shadow:0 6px 24px var(--accent-glow)}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 32px var(--accent-glow)}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none}
 .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border);margin-top:10px}
 .btn-ghost:hover{color:var(--text);border-color:var(--text-faint)}
 .btn-ghost.small{width:auto;padding:7px 12px;font-size:12px;margin-top:0}
@@ -250,8 +251,8 @@ button,input,textarea,select{font-family:inherit}
       <div class="brand-sub">DIGITAL INSTANCE</div>
     </div>
     <p class="auth-copy">
-      This is a persistent AI simulation of you. It is not an assistant.
-      Sign in to keep your memories and identity synced across sessions.
+      A persistent AI simulation of you. Not an assistant.
+      Sign in to keep your memories and identity synced.
     </p>
     <button id="google-signin" class="btn-primary">
       <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
@@ -292,7 +293,7 @@ button,input,textarea,select{font-family:inherit}
 
 <script type="module">
 /* ============================================================
- * CONFIG — everything hardcoded
+ * CONFIG
  * ============================================================ */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBphNE0wShXiCBe6v8v6FfH3nbAqnvkaLw",
@@ -314,10 +315,12 @@ const MEM = { maxContext: 12, extractionThreshold: 0.3, maxHistoryTurns: 16 };
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
   getAuth, onAuthStateChanged, signInAnonymously,
-  GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut
+  GoogleAuthProvider, signInWithPopup, signInWithRedirect,
+  getRedirectResult, signOut
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
-  getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc, deleteDoc
+  getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
+  updateDoc, deleteDoc, query, orderBy, limit
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const app = initializeApp(FIREBASE_CONFIG);
@@ -325,7 +328,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 /* ============================================================
- * STORE
+ * STORE — Firestore
  * ============================================================ */
 const Store = {
   userId: null,
@@ -383,12 +386,13 @@ const Store = {
     return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
   },
 
+  /* State doc lives at users/{uid}/state/current — 4 segments, valid doc path */
   async setState(state) {
-    await setDoc(doc(db, 'users', this.userId, 'state'),
+    await setDoc(doc(db, 'users', this.userId, 'state', 'current'),
       { ...state, updatedAt: Date.now() }, { merge: true });
   },
   async getState() {
-    const s = await getDoc(doc(db, 'users', this.userId, 'state'));
+    const s = await getDoc(doc(db, 'users', this.userId, 'state', 'current'));
     return s.exists() ? s.data() : {};
   },
 
@@ -399,7 +403,7 @@ const Store = {
     for (const m of mems) await deleteDoc(doc(db, 'users', this.userId, 'memories', m.id));
     for (const c of cons) await deleteDoc(doc(db, 'users', this.userId, 'conversations', c.id));
     for (const e of evs) await deleteDoc(doc(db, 'users', this.userId, 'events', e.id));
-    await deleteDoc(doc(db, 'users', this.userId, 'state'));
+    try { await deleteDoc(doc(db, 'users', this.userId, 'state', 'current')); } catch {}
   },
 
   async exportAll() {
@@ -475,7 +479,7 @@ async function retrieveRelevant(query) {
 }
 
 /* ============================================================
- * MEMORY EXTRACTION (rule-based)
+ * MEMORY EXTRACTION
  * ============================================================ */
 function extractMemories(text) {
   const results = [];
@@ -1172,6 +1176,8 @@ Router.register('settings', async (root) => {
 /* ============================================================
  * AUTH BOOT
  * ============================================================ */
+let hasBooted = false;
+
 function showApp() {
   $('#auth-screen').classList.add('hidden');
   $('#app').classList.remove('hidden');
@@ -1199,6 +1205,9 @@ function showApp() {
 }
 
 async function bootForUser(user) {
+  if (hasBooted) return;
+  hasBooted = true;
+
   Session.user = user;
   Store.userId = user.uid;
 
@@ -1216,30 +1225,52 @@ async function bootForUser(user) {
   showApp();
 }
 
-/* Handle return from Google redirect */
-getRedirectResult(auth).catch(err => {
-  if (err?.code && err.code !== 'auth/no-auth-event') {
-    toast('Sign-in failed: ' + err.message);
-  }
-});
+/* ============================================================
+ * SIGN-IN HANDLERS
+ * ============================================================ */
 
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    bootForUser(user).catch(e => {
-      console.error(e);
-      toast('Boot failed: ' + e.message);
-    });
-  }
-});
-
+/* Popup-first with redirect fallback */
 $('#google-signin').addEventListener('click', async () => {
+  const btn = $('#google-signin');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  const provider = new GoogleAuthProvider();
+  provider.addScope('profile');
+  provider.addScope('email');
+
   try {
-    const provider = new GoogleAuthProvider();
-    provider.addScope('profile');
-    provider.addScope('email');
-    await signInWithRedirect(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    if (result?.user) {
+      await bootForUser(result.user);
+    }
   } catch (e) {
-    toast('Google sign-in failed: ' + e.message);
+    console.warn('Popup sign-in error:', e.code, e.message);
+
+    if (e.code === 'auth/popup-blocked' ||
+        e.code === 'auth/operation-not-supported-in-this-environment' ||
+        e.code === 'auth/cancelled-popup-request' && !e.message.includes('closed')) {
+      // Fall back to redirect
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch (e2) {
+        toast('Sign-in failed: ' + e2.message);
+        btn.disabled = false;
+        btn.textContent = 'Continue with Google';
+      }
+    } else if (e.code === 'auth/popup-closed-by-user') {
+      // User dismissed it — silent
+      btn.disabled = false;
+      btn.textContent = 'Continue with Google';
+    } else if (e.code === 'auth/unauthorized-domain') {
+      toast('Domain not authorized. Add "localhost" in Firebase → Authentication → Settings → Authorized domains.');
+      btn.disabled = false;
+      btn.textContent = 'Continue with Google';
+    } else {
+      toast('Google sign-in failed: ' + e.message);
+      btn.disabled = false;
+      btn.textContent = 'Continue with Google';
+    }
   }
 });
 
@@ -1248,6 +1279,36 @@ $('#anon-signin').addEventListener('click', async () => {
   catch (e) { toast('Anon sign-in failed: ' + e.message); }
 });
 
+/* Handle return from redirect (fallback path) */
+getRedirectResult(auth)
+  .then(result => {
+    if (result?.user) {
+      bootForUser(result.user).catch(e => toast('Boot failed: ' + e.message));
+    }
+  })
+  .catch(err => {
+    if (err?.code && err.code !== 'auth/no-auth-event') {
+      toast('Sign-in failed: ' + err.message);
+    }
+  });
+
+/* Main auth listener */
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    bootForUser(user).catch(e => {
+      console.error('Boot error:', e);
+      toast('Boot failed: ' + e.message);
+      hasBooted = false;
+    });
+  } else {
+    // Signed out or never signed in — show auth screen
+    $('#app').classList.add('hidden');
+    $('#auth-screen').classList.remove('hidden');
+    hasBooted = false;
+  }
+});
+
+/* Expose for debugging */
 window.ME = { Store, Session, Router, sendMessage, getSelfModel, updateSelfModel, auth, db };
 </script>
 </body>
